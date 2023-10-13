@@ -10,8 +10,31 @@ import UIKit
 
 class InteractiveTextView:UIView{
     
-    lazy var textView:UITextView = { [unowned self] in
-        let textView = UITextView()
+    class UnselectableTappableTextView: UITextView {
+        override var selectedTextRange: UITextRange? {
+            get { return nil }
+            set {}
+        }
+
+        override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            if gestureRecognizer is UIPanGestureRecognizer {
+                return super.gestureRecognizerShouldBegin(gestureRecognizer)
+            }
+            if let tapGestureRecognizer = gestureRecognizer as? UITapGestureRecognizer,
+                tapGestureRecognizer.numberOfTapsRequired == 1 {
+                return super.gestureRecognizerShouldBegin(gestureRecognizer)
+            }
+            if let longPressGestureRecognizer = gestureRecognizer as? UILongPressGestureRecognizer,
+                longPressGestureRecognizer.minimumPressDuration < 0.325 {
+                return super.gestureRecognizerShouldBegin(gestureRecognizer)
+            }
+            gestureRecognizer.isEnabled = false
+            return false
+        }
+    }
+    
+    lazy var textView:UnselectableTappableTextView = { [unowned self] in
+        let textView = UnselectableTappableTextView()
         textView.isSelectable = true
         textView.isEditable = false
         textView.delegate = self
@@ -86,7 +109,8 @@ extension String {
                 searchRange = foundRange.upperBound..<self.endIndex
             }
         }
-        
         return ranges
     }
 }
+
+
